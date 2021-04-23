@@ -11,10 +11,11 @@ import CoreLocation
 import MapKit
 
 class ViewController: UIViewController,CLLocationManagerDelegate,MKMapViewDelegate {
-
+    
     @IBOutlet weak var mapView: MKMapView!
     
     var locationManager:CLLocationManager!
+    var lastCoordinate:CLLocationCoordinate2D?
     
     
     override func viewDidLoad() {
@@ -42,13 +43,41 @@ class ViewController: UIViewController,CLLocationManagerDelegate,MKMapViewDelega
     }
     
     // Mark LocationManager Delegate Methods
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        for location in locations {
-            print(location.coordinate.latitude)
-            print(location.coordinate.longitude)
+    func locationManager(manager: CLLocationManager!, didUpdateToLocation newLocation: CLLocation!, fromLocation oldLocation: CLLocation!){
+        
+        
+        if let oldLocationNew = oldLocation as CLLocation?{
+            let oldCoordinates = oldLocationNew.coordinate
+            let newCoordinates = newLocation.coordinate
+            var area = [oldCoordinates, newCoordinates]
+            let polyline = MKPolyline(coordinates: &area, count: area.count)
+            mapView.addOverlay(polyline)
         }
     }
-
-
+    
+    
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        
+        if let newCoordinate = locations.last?.coordinate {
+            
+            let area = [lastCoordinate ?? newCoordinate, newCoordinate]
+            
+            let polyline = MKPolyline(coordinates: area, count: area.count)
+            mapView.addOverlay(polyline)
+            lastCoordinate = newCoordinate
+        }
+        
+    }
+    
+    // Mark MKMapView Delegate Methods
+    func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
+        let pr = MKPolylineRenderer(overlay: overlay)
+        pr.strokeColor = .systemRed
+        pr.lineWidth = 3
+        return pr
+        
+    }
+    
+    
 }
 
